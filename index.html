@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sopa de Letras Snoopy</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background-image: url('https://cdn.pixabay.com/photo/2021/03/30/07/30/snoopy-6136129_1280.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            touch-action: manipulation;
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 20px;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 0 12px #ccc;
+            text-align: center;
+        }
+
+        h1, h2 {
+            color: #ff6f61;
+            text-shadow: 1px 1px 2px #fff;
+        }
+
+        input, select, button {
+            padding: 10px;
+            margin: 8px;
+            border-radius: 10px;
+            border: 1px solid #aaa;
+            width: calc(100% - 20px);
+            max-width: 300px;
+            font-size: 1em;
+        }
+
+        button {
+            background-color: #ffd966;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #ffcc33;
+        }
+
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            user-select: none;
+            touch-action: none;
+        }
+
+        td {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #888;
+            text-align: center;
+            font-size: 20px;
+            background-color: #fffbe6;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        td.selected {
+            background-color: #a8d5ff;
+            text-decoration: underline;
+        }
+
+        td.encontrada {
+            background-color: #90ee90 !important;
+            cursor: default;
+            text-decoration: line-through;
+            color: #555;
+        }
+
+        #juego, #perfil {
+            display: none;
+        }
+
+        #puntaje, #cronometro, #nivelActualTexto {
+            font-weight: bold;
+            margin: 10px 0;
+            font-size: 1.2em;
+        }
+
+        .top-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+
+        #listaPalabras {
+            margin: 10px 0;
+        }
+
+        #listaPalabras span {
+            margin: 5px;
+            padding: 4px 8px;
+            background: #ffd966;
+            border-radius: 8px;
+            cursor: default;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+
+        #listaPalabras span.encontrada {
+            text-decoration: line-through;
+            color: #555;
+            background: #90ee90;
+        }
+
+        .progress-bar {
+            width: 100%;
+            max-width: 300px;
+            height: 10px;
+            background: #ddd;
+            border-radius: 5px;
+            margin: 10px auto;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background: #ff6f61;
+            transition: width 1s linear;
+        }
+
+        .music-control {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+        }
+
+        @media (max-width: 600px) {
+            td {
+                width: calc(90vw / 12);
+                height: calc(90vw / 12);
+                font-size: 16px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            button, input, select {
+                font-size: 0.9em;
+                padding: 8px;
+            }
+
+            .container {
+                padding: 10px;
+            }
+        }
+
+        @media (min-width: 601px) and (max-width: 900px) {
+            td {
+                width: calc(80vw / 12);
+                height: calc(80vw / 12);
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <audio id="musica" autoplay loop>
+        <source src="https://www.bensound.com/bensound-music/bensound-ukulele.mp3" type="audio/mpeg">
+        Tu navegador no soporta audio.
+    </audio>
+    <button class="music-control" onclick="toggleMusic()">🔊</button>
+    <div class="container">
+        <h1>🐶 Sopa de Letras Snoopy 🧩</h1>
+        <div id="formulario">
+            <input type="text" id="nombre" placeholder="Tu nombre" aria-label="Nombre del jugador"><br>
+            <input type="number" id="edad" placeholder="Tu edad" aria-label="Edad del jugador"><br>
+            <select id="sexo" aria-label="Selecciona tu sexo">
+                <option value="">Selecciona tu sexo</option>
+                <option value="Masculino">Masculino</option>
+                <option value="Femenino">Femenino</option>
+                <option value="Otro">Otro</option>
+            </select><br>
+            <select id="difficultad" aria-label="Selecciona la dificultad">
+                <option value="facil">Fácil (8x8)</option>
+                <option value="medio">Medio (10x10)</option>
+                <option value="dificil">Difícil (12x12)</option>
+            </select><br>
+            <button onclick="registrarJugador()">Ingresar</button>
+        </div>
+        <div id="perfil">
+            <h2>👤 Perfil del Jugador</h2>
+            <p><strong>Nombre:</strong> <span id="perfilNombre"></span></p>
+            <p><strong>Edad:</strong> <span id="perfilEdad"></span></p>
+            <p><strong>Sexo:</strong> <span id="perfilSexo"></span></p>
+            <p id="puntaje">Puntaje acumulado: 0</p>
+            <p id="nivelActualTexto">Nivel actual: 1</p>
+            <button onclick="iniciarJuego()">Jugar</button>
+            <button onclick="reiniciarJuego()">🔄 Reiniciar Juego</button>
+        </div>
+        <div id="juego">
+            <div class="top-buttons">
+                <div id="nivelTitulo">Nivel 1</div>
+                <div id="cronometro">Tiempo: 60s</div>
+                <button onclick="togglePause()">Pausar</button>
+                <button onclick="darPista()">Pista</button>
+            </div>
+            <div class="progress-bar">
+                <div class="progress" id="progressBar"></div>
+            </div>
+            <p>Palabras a encontrar:</p>
+            <div id="listaPalabras"></div>
+            <table id="tablaSopa" role="grid"></table>
+            <button onclick="volverAlMenu()">Volver al Menú</button>
+        </div>
+    </div>
+    <script>
+        const categorias = {
+            frutas: ["MANZANA", "NARANJA", "PLATANO", "PERA", "FRESA", "MANGO", "CEREZA", "KIWI", "LIMON", "SANDIA"],
+            animales: ["PERRO", "GATO", "ELEFANTE", "JIRAFA", "LEON", "TIBURON", "CANGREJO", "RINOCERONTE", "TORTUGA", "AGUILA"],
+            paises: ["MEXICO", "BRASIL", "CANADA", "FRANCIA", "CHILE", "ARGENTINA", "JAPON", "ITALIA", "PERU", "RUSIA"],
+            tecnologia: ["COMPUTADORA", "INTERNET", "PROGRAMACION", "SOFTWARE", "HARDWARE", "TECLADO", "MOUSE", "PANTALLA", "REDES", "ALGORITMO"],
+            ciencias: ["ATOMO", "MOLECULA", "CELULA", "GENES", "ECOLOGIA", "QUIMICA", "BIOLOGIA", "FISIOLOGIA", "EVOLUCION", "NEURONA"],
+            fisica: ["ENERGIA", "FUERZA", "MASA", "VELOCIDAD", "ACELERACION", "GRAVEDAD", "IMPULSO", "MOMENTO", "TRABAJO", "POTENCIA"],
+            redes: ["ROUTER", "IP", "DNS", "SERVIDOR", "PROXY", "SWITCH", "FIREWALL", "VPN", "BANDA", "ANCHO"]
+        };
+
+        const todasPalabras = Object.values(categorias).flat();
+        let jugador = {
+            nombre: "",
+            edad: 0,
+            sexo: "",
+            dificultad: "facil",
+            puntaje: 0,
+            nivelActual: 0,
+            palabrasEncontradas: []
+        };
+        let tamanio = 8;
+        let palabrasActuales = [];
+        let sopa = [];
+        let seleccion = [];
+        let seleccionActiva = false;
+        let cronometro;
+        let tiempoRestante = 60;
+        let primeraCelda = null;
+        const musica = document.getElementById("musica");
+        musica.volume = 0.3;
+
+        function toggleMusic() {
+            if (musica.paused) {
+                musica.play();
+                document.querySelector(".music-control").textContent = "🔊";
+            } else {
+                musica.pause();
+                document.querySelector(".music-control").textContent = "🔇";
+            }
+        }
+
+        function guardarProgreso() {
+            localStorage.setItem("sopaJugador", JSON.stringify(jugador));
+        }
+
+        function cargarProgreso() {
+            const datos = localStorage.getItem("sopaJugador");
+            if (datos) {
+                jugador = JSON.parse(datos);
+                return true;
+            }
+            return false;
+        }
+
+        function registrarJugador() {
+            const nombre = document.getElementById("nombre").value.trim();
+            const edad = document.getElementById("edad").value;
+            const sexo = document.getElementById("sexo").value;
+            const dificultad = document.getElementById("difficultad").value;
+            if (!nombre || !edad || !sexo || !dificultad) {
+                alert("Completa todos los campos.");
+                return;
+            }
+            jugador.nombre = nombre;
+            jugador.edad = parseInt(edad);
+            jugador.sexo = sexo;
+            jugador.dificultad = dificultad;
+            jugador.puntaje = 0;
+            jugador.nivelActual = 0;
+            jugador.palabrasEncontradas = [];
+            tamanio = dificultad === "facil" ? 8 : dificultad === "medio" ? 10 : 12;
+            document.getElementById("formulario").style.display = "none";
+            document.getElementById("perfil").style.display = "block";
+            actualizarPerfil();
+            guardarProgreso();
+        }
+
+        function actualizarPerfil() {
+            document.getElementById("perfilNombre").innerText = jugador.nombre;
+            document.getElementById("perfilEdad").innerText = jugador.edad;
+            document.getElementById("perfilSexo").innerText = jugador.sexo;
+            document.getElementById("puntaje").innerText = `Puntaje acumulado: ${jugador.puntaje}`;
+            document.getElementById("nivelActualTexto").innerText = `Nivel actual: ${jugador.nivelActual + 1}`;
+        }
+
+        function iniciarJuego() {
+            if (cargarProgreso()) {
+                tamanio = jugador.dificultad === "facil" ? 8 : jugador.dificultad === "medio" ? 10 : 12;
+                alert(`Bienvenido de nuevo, ${jugador.nombre}. Continuarás en el nivel ${jugador.nivelActual + 1}`);
+                jugador.palabrasEncontradas = [];
+            } else {
+                jugador.nivelActual = 0;
+                jugador.palabrasEncontradas = [];
+            }
+            document.getElementById("formulario").style.display = "none";
+            document.getElementById("perfil").style.display = "none";
+            document.getElementById("juego").style.display = "block";
+            cargarNivel();
+        }
+
+        function reiniciarJuego() {
+            if (confirm("¿Seguro que quieres reiniciar el juego? Se perderá el progreso actual.")) {
+                localStorage.removeItem("sopaJugador");
+                location.reload();
+            }
+        }
+
+        function volverAlMenu() {
+            clearInterval(cronometro);
+            jugador.palabrasEncontradas = [];
+            document.getElementById("juego").style.display = "none";
+            document.getElementById("perfil").style.display = "block";
+            actualizarPerfil();
+            guardarProgreso();
+        }
+
+        const direcciones = [
+            [0, 1], [1, 0], [1, 1], [1, -1], [0, -1], [-1, 0], [-1, -1], [-1, 1]
+        ];
+
+        function colocarPalabra(sopa, palabra) {
+            const maxIntentos = 150;
+            const size = sopa.length;
+            for (let intento = 0; intento < maxIntentos; intento++) {
+                const dir = direcciones[Math.floor(Math.random() * direcciones.length)];
+                const [filaInc, colInc] = dir;
+                let filaStartMax = size - (filaInc * (palabra.length - 1));
+                let filaStartMin = filaInc < 0 ? palabra.length - 1 : 0;
+                let colStartMax = size - (colInc * (palabra.length - 1));
+                let colStartMin = colInc < 0 ? palabra.length - 1 : 0;
+                const filaStart = Math.floor(Math.random() * (filaStartMax - filaStartMin + 1)) + filaStartMin;
+                const colStart = Math.floor(Math.random() * (colStartMax - colStartMin + 1)) + colStartMin;
+                let puedeColocar = true;
+                for (let i = 0; i < palabra.length; i++) {
+                    const f = filaStart + i * filaInc;
+                    const c = colStart + i * colInc;
+                    if (f < 0 || f >= size || c < 0 || c >= size || sopa[f][c] !== "") {
+                        puedeColocar = false;
+                        break;
+                    }
+                }
+                if (puedeColocar) {
+                    for (let i = 0; i < palabra.length; i++) {
+                        const f = filaStart + i * filaInc;
+                        const c = colStart + i * colInc;
+                        sopa[f][c] = palabra[i];
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function obtenerPalabrasNivel(nivel, dificultad) {
+            const cantPalabras = dificultad === "facil" ? 3 : dificultad === "medio" ? 5 : 7;
+            const inicio = nivel * cantPalabras;
+            let seleccionadas = todasPalabras.slice(inicio, inicio + cantPalabras);
+            if (seleccionadas.length < cantPalabras) {
+                seleccionadas = todasPalabras.slice(0, cantPalabras);
+            }
+            return seleccionadas;
+        }
+
+        function cargarNivel() {
+            clearInterval(cronometro);
+            tiempoRestante = 60 + jugador.nivelActual * 10;
+            document.getElementById("cronometro").innerText = `Tiempo: ${tiempoRestante}s`;
+            document.getElementById("progressBar").style.width = "100%";
+            seleccion = [];
+            seleccionActiva = false;
+            primeraCelda = null;
+            isPaused = false;
+            document.getElementById("nivelTitulo").innerText = `Nivel ${jugador.nivelActual + 1}`;
+            document.getElementById("nivelActualTexto").innerText = `Nivel actual: ${jugador.nivelActual + 1}`;
+            sopa = Array.from({ length: tamanio }, () => Array(tamanio).fill(""));
+            palabrasActuales = obtenerPalabrasNivel(jugador.nivelActual, jugador.dificultad);
+            for (const palabra of palabrasActuales) {
+                if (!colocarPalabra(sopa, palabra)) {
+                    console.warn("No se pudo colocar la palabra:", palabra);
+                }
+            }
+            const letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            for (let i = 0; i < tamanio; i++) {
+                for (let j = 0; j < tamanio; j++) {
+                    if (sopa[i][j] === "") {
+                        sopa[i][j] = letras[Math.floor(Math.random() * letras.length)];
+                    }
+                }
+            }
+            actualizarTabla();
+            actualizarListaPalabras();
+            iniciarCronometro();
+        }
+
+        function actualizarTabla() {
+            const tabla = document.getElementById("tablaSopa");
+            tabla.innerHTML = "";
+            for (let i = 0; i < tamanio; i++) {
+                const tr = document.createElement("tr");
+                for (let j = 0; j < tamanio; j++) {
+                    const td = document.createElement("td");
+                    td.textContent = sopa[i][j];
+                    td.dataset.fila = i;
+                    td.dataset.col = j;
+                    td.classList.remove("encontrada", "selected");
+                    td.style.cursor = "pointer";
+                    td.addEventListener("mousedown", iniciarSeleccion);
+                    td.addEventListener("mouseenter", moverSeleccion);
+                    td.addEventListener("mouseup", terminarSeleccion);
+                    td.addEventListener("touchstart", handleTouchStart);
+                    td.addEventListener("touchmove", handleTouchMove);
+                    td.addEventListener("touchend", terminarSeleccion);
+                    td.setAttribute("aria-label", `Celda ${i},${j}: ${sopa[i][j]}`);
+                    tr.appendChild(td);
+                }
+                tabla.appendChild(tr);
+            }
+        }
+
+        function getCellFromTouch(event) {
+            const touch = event.changedTouches[0];
+            const element = document.elementFromPoint(touch.clientX, touch.clientY);
+            return element && element.tagName === "TD" ? element : null;
+        }
+
+        function handleTouchStart(event) {
+            event.preventDefault();
+            const cell = getCellFromTouch(event);
+            if (cell) {
+                iniciarSeleccion({ target: cell });
+            }
+        }
+
+        function handleTouchMove(event) {
+            event.preventDefault();
+            const cell = getCellFromTouch(event);
+            if (cell) {
+                moverSeleccion({ target: cell });
+            }
+        }
+
+        function actualizarListaPalabras() {
+            const listaDiv = document.getElementById("listaPalabras");
+            listaDiv.innerHTML = "";
+            palabrasActuales.forEach(p => {
+                const span = document.createElement("span");
+                span.textContent = p;
+                if (jugador.palabrasEncontradas.includes(p)) {
+                    span.classList.add("encontrada");
+                }
+                listaDiv.appendChild(span);
+            });
+        }
+
+        function iniciarSeleccion(e) {
+            if (isPaused || e.target.classList.contains("encontrada")) return;
+            limpiarSeleccion();
+            seleccionActiva = true;
+            primeraCelda = e.target;
+            seleccionarCelda(e.target);
+        }
+
+        function moverSeleccion(e) {
+            if (!seleccionActiva || isPaused || e.target.classList.contains("encontrada")) return;
+            const celdaActual = e.target;
+            const fila1 = parseInt(primeraCelda.dataset.fila);
+            const col1 = parseInt(primeraCelda.dataset.col);
+            const fila2 = parseInt(celdaActual.dataset.fila);
+            const col2 = parseInt(celdaActual.dataset.col);
+            const difFila = fila2 - fila1;
+            const difCol = col2 - col1;
+            let dir = null;
+            for (const [df, dc] of direcciones) {
+                if ((difFila === 0 && difCol === 0) || (df === 0 && dc === 0)) continue;
+                const steps = Math.max(Math.abs(difFila / (df || 1)), Math.abs(difCol / (dc || 1)));
+                if (Number.isInteger(steps) && (difFila === steps * df) && (difCol === steps * dc)) {
+                    dir = [df, dc];
+                    break;
+                }
+            }
+            if (dir) {
+                limpiarSeleccion();
+                const [df, dc] = dir;
+                const steps = Math.max(Math.abs(difFila / (df || 1)), Math.abs(difCol / (dc || 1)));
+                for (let i = 0; i <= steps; i++) {
+                    const f = fila1 + i * df;
+                    const c = col1 + i * dc;
+                    const celda = document.querySelector(`td[data-fila="${f}"][data-col="${c}"]`);
+                    if (celda) seleccionarCelda(celda);
+                }
+            }
+        }
+
+        function terminarSeleccion() {
+            if (!seleccionActiva) return;
+            seleccionActiva = false;
+            const palabraFormada = seleccion.map(td => td.textContent).join("");
+            const palabraMayus = palabraFormada.toUpperCase();
+            if (palabrasActuales.includes(palabraMayus) && !jugador.palabrasEncontradas.includes(palabraMayus)) {
+                alert(`¡Correcto! Encontraste la palabra: ${palabraMayus}`);
+                jugador.puntaje += 10;
+                jugador.palabrasEncontradas.push(palabraMayus);
+                seleccion.forEach(td => {
+                    td.classList.add("encontrada");
+                    td.removeEventListener("mousedown", iniciarSeleccion);
+                    td.removeEventListener("mouseenter", moverSeleccion);
+                    td.removeEventListener("mouseup", terminarSeleccion);
+                    td.removeEventListener("touchstart", handleTouchStart);
+                    td.removeEventListener("touchmove", handleTouchMove);
+                    td.removeEventListener("touchend", terminarSeleccion);
+                    td.style.cursor = "default";
+                });
+                actualizarPerfil();
+                actualizarListaPalabras();
+                if (jugador.palabrasEncontradas.length === palabrasActuales.length) {
+                    jugador.nivelActual++;
+                    jugador.palabrasEncontradas = [];
+                    guardarProgreso();
+                    setTimeout(() => {
+                        alert("¡Subes al siguiente nivel!");
+                        cargarNivel();
+                    }, 600);
+                }
+            } else {
+                alert("Selección incorrecta, intenta de nuevo.");
+            }
+            limpiarSeleccion();
+        }
+
+        function seleccionarCelda(td) {
+            td.classList.add("selected");
+            seleccion.push(td);
+        }
+
+        function limpiarSeleccion() {
+            seleccion.forEach(td => td.classList.remove("selected"));
+            seleccion = [];
+        }
+
+        function iniciarCronometro() {
+            cronometro = setInterval(() => {
+                if (!isPaused) {
+                    tiempoRestante--;
+                    document.getElementById("cronometro").textContent = `Tiempo: ${tiempoRestante}s`;
+                    document.getElementById("progressBar").style.width = `${(tiempoRestante / (60 + jugador.nivelActual * 10)) * 100}%`;
+                    if (tiempoRestante <= 0) {
+                        clearInterval(cronometro);
+                        alert("¡Se acabó el tiempo! Reiniciando nivel.");
+                        jugador.palabrasEncontradas = [];
+                        cargarNivel();
+                    }
+                }
+            }, 1000);
+        }
+
+        window.onload = () => {
+            if (cargarProgreso()) {
+                document.getElementById("formulario").style.display = "none";
+                document.getElementById("perfil").style.display = "block";
+                actualizarPerfil();
+                alert(`Bienvenido de nuevo, ${jugador.nombre}. Continúa tu juego.`);
+            }
+        };
+    </script>
+</body>
+</html>
